@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_desafio2_informatica2_FILE /home/lyon/desafio2_informatica2/build/Desktop_Qt_6_9_0-Debug/desafio2_informatica2)
-set(__QT_DEPLOY_TARGET_desafio2_informatica2_TYPE EXECUTABLE)
