@@ -1,0 +1,9 @@
+/home/lyon/desafio2_informatica2/build/CMakeFiles/desafio2_informatica2.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/edit_cache.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/rebuild_cache.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/list_install_components.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/install.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/install/local.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/install/strip.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/desafio2_informatica2_autogen_timestamp_deps.dir
+/home/lyon/desafio2_informatica2/build/CMakeFiles/desafio2_informatica2_autogen.dir
