@@ -1,49 +1,100 @@
 #include "fecha.h"
-//#include <iostream>
+#include <iostream>
 
-Fecha::Fecha(int d, int m, int a) {
-    dia = new int(d);
-    mes = new int(m);
-    anio = new int(a);
+using namespace std;
+
+// constructor por defecto 
+Fecha::Fecha(){
+    dia = 1;
+    mes = "enero";
+    año = 2025;
 }
 
-Fecha::Fecha(const Fecha& otra) {
-    dia = new int(*otra.dia);
-    mes = new int(*otra.mes);
-    anio = new int(*otra.anio);
+// contructor sobreacargado 
+Fecha::Fecha(int nuevoDia, string& nuevoMes, int nuevoAño){
+    dia = nuevoDia;
+    mes = nuevoMes;
+    año = nuevoAño;
 }
 
-Fecha::~Fecha() {
-    delete dia;
-    delete mes;
-    delete anio;
+// destructor
+Fecha::~Fecha(){}
+
+// metodos setter y gueter para dia 
+void Fecha::setDia(int nuevoDia){
+    dia = nuevoDia;
+}
+int Fecha::getDia(){
+    return dia;
 }
 
-// Getters
-int Fecha::getDia() const { return *dia; }
-int Fecha::getMes() const { return *mes; }
-int Fecha::getAnio() const { return *anio; }
-
-// Setters
-void Fecha::setDia(int d) { *dia = d; }
-void Fecha::setMes(int m) { *mes = m; }
-void Fecha::setAnio(int a) { *anio = a; }
-
-// Validar de fecha
-bool Fecha::esValida() const {
-    if (*mes < 1 || *mes > 12 || *dia < 1 || *dia > 31) return false;
-    return true;
+// metodos setter y gueters para mes 
+void Fecha::setMes(string& nuevoMes){
+    mes = nuevoMes;
+}
+string Fecha::getMes(){
+    return mes;
 }
 
-// Actualiza fecha sumando días
-void Fecha::actualizarFecha(int n) {
-    *dia += n;
-    while (*dia > 31) {
-        *dia -= 31;
-        *mes += 1;
-        if (*mes > 12) {
-            *mes = 1;
-            *anio += 1;
-        }
+// metodos setter y gueter para año
+void Fecha::setAño(string &nuevoAñoTexto) {
+    año = stoi(nuevoAñoTexto);
+}
+int Fecha::getAño(){
+    return año;
+}
+
+// convertir mes a numero
+int convertirMesANumero(string mes){
+  if (mes == "enero")
+      return 1;
+  if (mes == "febrero")
+      return 2;
+  if (mes == "marzo")
+      return 3;
+  if (mes == "abril")
+      return 4;
+  if (mes == "mayo")
+      return 5;
+  if (mes == "junio")
+      return 6;
+  if (mes == "julio")
+      return 7;
+  if (mes == "agosto")
+      return 8;
+  if (mes == "septiembre")
+      return 9;
+  if (mes == "octubre")
+      return 10;
+  if (mes == "noviembre")
+      return 11;
+  if (mes == "diciembre")
+      return 12;
+}
+
+// actualizar fecha 
+string Fecha::actualizarFecha(){
+    return to_string(dia) + " de " + mes + " de " + to_string(año);
+}
+
+// validar si la fecha es válida 
+// partimos de que todos los meses tienen 30 dias 
+bool Fecha::esValida(){
+    int mesNum = convertirMesANumero(mes);
+    return (mesNum >= 1 && mesNum <= 12 && dia >= 1 && dia <= 30);
+}
+
+// verificar dias entre fechas 
+int Fecha::diasEntreFechas(Fecha &otraFecha){
+    int mes1 = convertirMesANumero(mes);
+    int mes2 = convertirMesANumero(otraFecha.mes);
+
+    int total1 = año * 360 + mes1 * 30 + dia;
+    int total2 = otraFecha.año * 360 + mes2 * 30 + otraFecha.dia;
+
+    int diferencia = total2 - total1;
+    if (diferencia < 0){
+        diferencia = -diferencia;
     }
+    return diferencia;
 }

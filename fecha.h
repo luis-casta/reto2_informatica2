@@ -1,31 +1,35 @@
 #ifndef FECHA_H
 #define FECHA_H
+#include <string>
+
+using namespace std;
 
 class Fecha {
 private:
-    int* dia;
-    int* mes;
-    int* anio;
+    int dia;
+    string mes;
+    int año;
 
 public:
-    Fecha(int d = 1, int m = 1, int a = 2000);
-    Fecha(const Fecha& otra); // Constructor de copia
+    Fecha();
+    Fecha(int nuevoDia, string &nuevoMes, int nuevoAño);
     ~Fecha(); // Destructor
 
-    // Getters
-    int getDia() const;
-    int getMes() const;
-    int getAnio() const;
+    // setters y gueters para dia
+    void setDia(int nuevoDia);
+    int getDia();
 
-    // Setters
-    void setDia(int d);
-    void setMes(int m);
-    void setAnio(int a);
+    // setters y gueters para mes
+    void setMes(string& nuevoDia);
+    string getMes();
 
-    // Métodos clave
-    bool esValida() const;
-    void actualizarFecha(int n);
+    // setters y gueters para año
+    void setAño(string &nuevoAño);
+    int getAño();
 
+    bool esValida();
+    string actualizarFecha();
+    int diasEntreFechas(Fecha& otraFecha);
 };
 
 #endif
