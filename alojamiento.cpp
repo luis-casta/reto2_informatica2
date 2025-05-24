@@ -4,14 +4,18 @@
 
 using namespace std;
 
-Alojamiento::Alojamiento(){
+Alojamiento::Alojamiento() {
     nombre = departamento = amenidades = municipio = direccion = tipo = "";
-    identificador = 0;
     precioNoche = 0.0;
+    identificador = 0;
+    reservaciones = nullptr;
+    contadorReservaciones = 0;
+    disponible = true;
 }
 
-// constructor sobrecargado (con parametros)
-Alojamiento::Alojamiento(string& nuevoNombre, int id, float nuevoPrecio, string& nuevaAmenidad, string& depto, string& nuevoMunicipio, string& dir, string& nuevoTipo) {
+// Constructor sobrecargado (con parámetros)
+Alojamiento::Alojamiento(string& nuevoNombre, int id, float nuevoPrecio, string& nuevaAmenidad,
+                         string& depto, string& nuevoMunicipio, string& dir, string& nuevoTipo, bool estadoDisponible) {
     nombre = nuevoNombre;
     identificador = id;
     precioNoche = nuevoPrecio;
@@ -20,38 +24,45 @@ Alojamiento::Alojamiento(string& nuevoNombre, int id, float nuevoPrecio, string&
     municipio = nuevoMunicipio;
     direccion = dir;
     tipo = nuevoTipo;
+    disponible = estadoDisponible;
+    reservaciones = nullptr;
+    contadorReservaciones = 0;
 }
 
-// destructor 
-Alojamiento::~Alojamiento(){}
+// Destructor
+Alojamiento::~Alojamiento() {
+    if (reservaciones != nullptr) {
+        delete[] reservaciones;
+    }
+}
 
 // setter y guetters para nombre
 void Alojamiento::setNombre(string& nuevoNombre){
      nombre = nuevoNombre;
 }
 string Alojamiento::getNombre(){
-	return nombre;
+    return nombre;
 }
 
-// setter y gueter para idntificador 
+// setter y gueter para idntificador
 void Alojamiento::setIdentificador(int id){
     identificador = id;
 }
 int Alojamiento::getIdentificador(){
-	return identificador;
+    return identificador;
 }
 
-// setter y gueter para precio por noche 
+// setter y gueter para precio por noche
 void Alojamiento::setPrecioNoche(float nuevoPrecio){
     precioNoche = nuevoPrecio;
 }
 float Alojamiento::getPrecioNoche(){
-	return precioNoche;
+    return precioNoche;
 }
 
-// setter y guetters para amenidades 
+// setter y guetters para amenidades
 void Alojamiento::setAmenidades(string& nuevaAmenidad){
-	amenidades = nuevaAmenidad;
+    amenidades = nuevaAmenidad;
 }
 string Alojamiento::getAmenidades(){
    return amenidades;
@@ -59,15 +70,15 @@ string Alojamiento::getAmenidades(){
 
 // setter y guetters para departamento
 void Alojamiento::setDeparatamento(string& depto){
-	departamento = depto;
+    departamento = depto;
 }
 string Alojamiento::getDeparatameto(){
    return departamento;
 }
 
-// setter y guetters para municipio 
+// setter y guetters para municipio
 void Alojamiento::setMunicipio(string& nuevoMunicipio){
-	municipio = nuevoMunicipio;
+    municipio = nuevoMunicipio;
 }
 string Alojamiento::getMunicipio(){
    return municipio;
@@ -81,35 +92,73 @@ string Alojamiento::getDireccion(){
    return direccion;
 }
 
-// setter y guetters para municipio 
+// setter y guetters para municipio
 void Alojamiento::setTipo(string& nuevoTipo){
-	tipo = tipo;
+    tipo = nuevoTipo;
 }
 string Alojamiento::getTipo(){
    return tipo;
 }
 
-// metodos adicionales 
-bool Alojamiento::estaDisponible(Fecha& fecha){
-	return true;
-    // falta implementar
+// setters y guetter para disponible
+void Alojamiento::setDisponible(bool estado){
+    disponible = estado;
+}
+bool Alojamiento::getDisponible(){
+    return disponible;
 }
 
-bool Alojamiento::agrgarReservacion(string& codigo){
-   return true;
-   // falta implementar
+// verificar disponibilidad
+bool Alojamiento::estaDisponible(Fecha *ptrInicio, int noches) {
+    if(ptrInicio == nullptr || noches <= 0 || !disponible) {
+        return false;
+    }
+    // Falta implementar la lógica de las fechas
+    return true;
 }
 
+
+
+// agrgar reservacion
+bool Alojamiento::agrgarReservacion(Reservacion *ptrReserva) {
+    // Verificar si el puntero es válido
+    if (ptrReserva == nullptr || !estaDisponible(nullptr, 1)) {
+        return false;
+    }
+
+    // Creamos un nuevo arreglo con espacio para una reservación adicional
+    Reservacion *ptrNuevasReservaciones = new Reservacion[contadorReservaciones + 1];
+
+    // Copiamos las reservaciones existentes al nuevo arreglo
+    for (int i = 0; i < contadorReservaciones; i++) {
+        ptrNuevasReservaciones[i] = reservaciones[i];
+    }
+
+    // Agregamos la nueva reservación al final
+    ptrNuevasReservaciones[contadorReservaciones] = *ptrReserva;
+    contadorReservaciones++;
+
+    // Liberamos el arreglo antiguo si existía
+    if (reservaciones != nullptr) {
+        delete[] reservaciones;
+    }
+
+    // Actualizamos el puntero para que apunte al nuevo arreglo
+    reservaciones = ptrNuevasReservaciones;
+    return true;
+}
+
+
+
+// modificar precio
 void Alojamiento::modificarPrecio(float nuevoPrecio){
-    if (nuevoPrecio > 0){
-      precioNoche = nuevoPrecio;
+    if(nuevoPrecio > 0){
+        precioNoche = nuevoPrecio;
     }
 }
 
-string Alojamiento::obtenerDetalles(){
-    return "Alñojamiento" + nombre + "\nPrecio: " + to_string(precioNoche) + "\nTipo: " + tipo;
-}
 
-void Alojamiento::actualizarDisponibilidad(bool disponible){
-   // falta implementarla
+// actualizar disponibilidad
+void Alojamiento::actualizarDisponibilidad(bool nuevoEstado) {
+    disponible = nuevoEstado;
 }
