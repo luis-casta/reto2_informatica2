@@ -1,26 +1,27 @@
 #include "fecha.h"
 #include <iostream>
+#include <string>
 
 using namespace std;
 
-// constructor por defecto 
+// Constructor por defecto
 Fecha::Fecha(){
     dia = 1;
     mes = "enero";
-    año = 2025;
+    año = 2024;
 }
 
-// contructor sobreacargado 
-Fecha::Fecha(int nuevoDia, string& nuevoMes, int nuevoAño){
+// Constructor sobrecargado (con parametros)
+Fecha::Fecha(int nuevoDia, string &nuevoMes, int nuevoAño){
     dia = nuevoDia;
     mes = nuevoMes;
     año = nuevoAño;
 }
 
-// destructor
+// Destructor
 Fecha::~Fecha(){}
 
-// metodos setter y gueter para dia 
+// Setter y getter para dia
 void Fecha::setDia(int nuevoDia){
     dia = nuevoDia;
 }
@@ -28,7 +29,7 @@ int Fecha::getDia(){
     return dia;
 }
 
-// metodos setter y gueters para mes 
+// Setter y getter para mes
 void Fecha::setMes(string& nuevoMes){
     mes = nuevoMes;
 }
@@ -36,65 +37,114 @@ string Fecha::getMes(){
     return mes;
 }
 
-// metodos setter y gueter para año
-void Fecha::setAño(string &nuevoAñoTexto) {
-    año = stoi(nuevoAñoTexto);
+// Setter y getter para año
+void Fecha::setAño(string &nuevoAño){
+    año = stoi(nuevoAño);
 }
 int Fecha::getAño(){
     return año;
 }
 
-// convertir mes a numero
-int convertirMesANumero(string mes){
-  if (mes == "enero")
-      return 1;
-  if (mes == "febrero")
-      return 2;
-  if (mes == "marzo")
-      return 3;
-  if (mes == "abril")
-      return 4;
-  if (mes == "mayo")
-      return 5;
-  if (mes == "junio")
-      return 6;
-  if (mes == "julio")
-      return 7;
-  if (mes == "agosto")
-      return 8;
-  if (mes == "septiembre")
-      return 9;
-  if (mes == "octubre")
-      return 10;
-  if (mes == "noviembre")
-      return 11;
-  if (mes == "diciembre")
-      return 12;
+// Método para validar si la fecha es válida
+bool Fecha::esValida(){
+    // Verificar año válido
+    if(año < 1){
+        return false;
+    }
+
+    // Verificar día válido
+    if(dia < 1 || dia > 31){
+        return false;
+    }
+
+    // Verificar mes válido y días correspondientes
+    if(mes == "enero" || mes == "marzo" || mes == "mayo" || mes == "julio" ||
+        mes == "agosto" || mes == "octubre" || mes == "diciembre"){
+        return dia <= 31;
+    }
+    else if(mes == "abril" || mes == "junio" || mes == "septiembre" || mes == "noviembre"){
+        return dia <= 30;
+    }
+    else if(mes == "febrero"){
+        // Verificar año bisiesto
+        bool esBisiesto = (año % 4 == 0 && año % 100 != 0) || (año % 400 == 0);
+        if(esBisiesto){
+            return dia <= 29;
+        }
+        else{
+            return dia <= 28;
+        }
+    }
+    else{
+        return false;
+    }
 }
 
-// actualizar fecha 
+// Método para actualizar fecha (convertir a string)
 string Fecha::actualizarFecha(){
     return to_string(dia) + " de " + mes + " de " + to_string(año);
 }
 
-// validar si la fecha es válida 
-// partimos de que todos los meses tienen 30 dias 
-bool Fecha::esValida(){
-    int mesNum = convertirMesANumero(mes);
-    return (mesNum >= 1 && mesNum <= 12 && dia >= 1 && dia <= 30);
+// Método para verificar si esta fecha intercepta con otra fecha por un número de noches
+bool Fecha::interceptaCon(Fecha *ptrFecha, int noches){
+    if(ptrFecha == nullptr || noches <= 0){
+        return false;
+    }
+
+    // Convertir fechas a días del año para comparar más fácilmente
+    int diasEstaFecha = convertirADias();
+    int diasOtraFecha = ptrFecha->convertirADias();
+
+    // Si las fechas están en años diferentes, comparación más compleja
+    if(año != ptrFecha->getAño()){
+        return false; // Implementación simple: no intercepta si son años diferentes
+    }
+
+    // Verificar si hay solapamiento
+    int finEstaReserva = diasEstaFecha + noches - 1;
+    int finOtraReserva = diasOtraFecha + noches - 1;
+
+    // Hay intercepto si:
+    // - Esta fecha empieza antes de que termine la otra
+    // - Y la otra fecha empieza antes de que termine esta
+    return (diasEstaFecha <= finOtraReserva) && (diasOtraFecha <= finEstaReserva);
 }
 
-// verificar dias entre fechas 
-int Fecha::diasEntreFechas(Fecha &otraFecha){
-    int mes1 = convertirMesANumero(mes);
-    int mes2 = convertirMesANumero(otraFecha.mes);
+// Método auxiliar privado para convertir fecha a días del año
+int Fecha::convertirADias(){
+    int diasDelAño = 0;
 
-    int total1 = año * 360 + mes1 * 30 + dia;
-    int total2 = otraFecha.año * 360 + mes2 * 30 + otraFecha.dia;
+    // Sumar días de los meses anteriores
+    string meses[] = {"enero", "febrero", "marzo", "abril", "mayo", "junio",
+                      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"};
+    int diasPorMes[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-    int diferencia = total2 - total1;
-    if (diferencia < 0){
-        diferencia = -diferencia;
+    // Verificar si es año bisiesto
+    bool esBisiesto = (año % 4 == 0 && año % 100 != 0) || (año % 400 == 0);
+    if(esBisiesto){
+        diasPorMes[1] = 29;
     }
-    return diferencia;
+
+    // Encontrar el índice del mes actual
+    int indiceMes = -1;
+    for(int i = 0; i < 12; i++){
+        if(meses[i] == mes){
+            indiceMes = i;
+            break;
+        }
+    }
+
+    if(indiceMes == -1){
+        return 0; // Mes inválido
+    }
+
+    // Sumar días de meses anteriores
+    for(int i = 0; i < indiceMes; i++){
+        diasDelAño += diasPorMes[i];
+    }
+
+    // Sumar días del mes actual
+    diasDelAño += dia;
+
+    return diasDelAño;
 }

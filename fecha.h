@@ -13,7 +13,7 @@ private:
 public:
     Fecha();
     Fecha(int nuevoDia, string &nuevoMes, int nuevoAño);
-    ~Fecha(); // Destructor
+    ~Fecha();
 
     // setters y gueters para dia
     void setDia(int nuevoDia);
@@ -29,7 +29,7 @@ public:
 
     bool esValida();
     string actualizarFecha();
-    int diasEntreFechas(Fecha& otraFecha);
+    bool interceptaCon(Fecha* fecha, int noches);
 };
 
 #endif
