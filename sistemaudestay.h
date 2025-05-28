@@ -6,64 +6,54 @@
 #include "alojamiento.h"
 #include "anfitrion.h"
 #include "historico.h"
+#include "reservacion.h"
+#include "fecha.h"
 
 using namespace std;
 
-class SistemaUdestay
-{
+class SistemaUdestay {
 private:
     Anfitrion* anfitriones;
     Huesped* huespedes;
     Alojamiento* alojamientos;
+    Reservacion* reservaciones;
     Historico* historico;
+
+    int capacidad;
     int contadorAnfitriones;
     int contadorHuespedes;
     int contadorAlojamientos;
-    int capacidad;
+    int contadorReservaciones;
+
+
+    // Métodos auxiliares privados
+    bool documentoExiste(string& documento, bool esAnfitrion);
+    bool alojamientoDisponible(int idAlojamiento, Fecha* inicio, int noches);
+    string generarCodigoReserva();
 
 public:
+    // Constructores y destructor
     SistemaUdestay();
     SistemaUdestay(int nuevaCapacidad);
     ~SistemaUdestay();
 
-    // métodos getter y setter para anfitriones
-    void setAnfitriones(Anfitrion* nuevosAnfitriones);
-    Anfitrion* getAnfitriones();
+    // Métodos de registro
+    void registrarAnfitrion(string& documento);
+    void registrarHuesped(string& documento);
+    void agregarAlojamiento(Alojamiento* alojamiento);
+    bool validarDocumento(const char* documento, int tipoUsuario, const char* rutaArchivo = "anfitriones.txt");//valida el usuario
 
-    // métodos getter y setter para huespedes
-    void setHuespedes(Huesped* nuevosHuespedes);
-    Huesped* getHuespedes();
-
-    // métodos getter y setter para alojamientos
-    void setAlojamientos(Alojamiento* nuevosAlojamientos);
-    Alojamiento* getAlojamientos();
-
-    // métodos getter y setter para historico
-    void setHistorico(Historico* nuevoHistorico);
-    Historico* getHistorico();
-
-    // métodos getter y setter para contadorAnfitriones
-    void setContadorAnfitriones(int nuevoContador);
-    int getContadorAnfitriones();
-
-    // métodos getter y setter para contadorHuespedes
-    void setContadorHuespedes(int nuevoContador);
-    int getContadorHuespedes();
-
-    // métodos getter y setter para contadorAlojamientos
-    void setContadorAlojamientos(int nuevoContador);
-    int getContadorAlojamientos();
-
-    // métodos getter y setter para capacidad
-    void setCapacidad(int nuevaCapacidad);
-    int getCapacidad();
-
-    // métodos del sistema
-    void resgistrarAnfitrio(string& documento);
-    void resgistrarHuesped(string& documento);
-    void agrgarAlojamiento(Alojamiento* alojamiento);
+    // Métodos de búsqueda y estadísticas
     void buscarAlojamientoPorUbicacion(string& ubicacion);
     void mostrarEstadisticaReservas();
+
+    // Métodos de autenticación
+    bool verificarAnfitrion(string& documento);
+    bool validarContraseñaAnfitrion(string& documento, string& contraseña);
+    bool verificarHuesped(string& documento);
+    bool validarContraseñaHuesped(string& documento, string& contraseña);
+
+    // Métodos de gestión de datos
     void actualizarHistorico(Fecha* corteDeFecha);
     void guardarDatos();
     void cargarDatos();
