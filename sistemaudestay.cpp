@@ -1,7 +1,11 @@
 #include "sistemaudestay.h"
 #include <iostream>
 #include <fstream>
+#include <string>
 using namespace std;
+
+// Inicialización del contador estático
+long  SistemaUdestay::contadorIteracionesGlobal = 0;
 
 SistemaUdestay::SistemaUdestay() {
     capacidad = 100;
@@ -15,6 +19,7 @@ SistemaUdestay::SistemaUdestay() {
     contadorHuespedes = 0;
     contadorAlojamientos = 0;
     contadorReservaciones = 0;
+    contadorIteracionesLocal = 0;
 }
 
 SistemaUdestay::SistemaUdestay(int nuevaCapacidad) {
@@ -29,6 +34,7 @@ SistemaUdestay::SistemaUdestay(int nuevaCapacidad) {
     contadorHuespedes = 0;
     contadorAlojamientos = 0;
     contadorReservaciones = 0;
+    contadorIteracionesLocal = 0;
 }
 
 SistemaUdestay::~SistemaUdestay() {
@@ -39,15 +45,38 @@ SistemaUdestay::~SistemaUdestay() {
     delete historico;
 }
 
+// Métodos privados para medición de recursos
+void SistemaUdestay::incrementarIteraciones(long long cantidad) {
+    contadorIteracionesLocal += cantidad;
+    contadorIteracionesGlobal += cantidad;
+}
+
+void SistemaUdestay::resetearContadorLocal() {
+    contadorIteracionesLocal = 0;
+}
+
+long long SistemaUdestay::calcularMemoriaObjetos() {
+    long long memoria = 0;
+    memoria += sizeof(SistemaUdestay);
+    memoria += sizeof(Historico);
+    return memoria;
+}
+
+long long SistemaUdestay::calcularMemoriaArray(int elementos, int tamanoElemento) {
+    return elementos * tamanoElemento;
+}
+
 bool SistemaUdestay::documentoExiste(string& documento, bool esAnfitrion) {
     if (esAnfitrion) {
         for (int i = 0; i < contadorAnfitriones; i++) {
+            incrementarIteraciones();
             if (anfitriones[i].getDocumento() == documento) {
                 return true;
             }
         }
     } else {
         for (int i = 0; i < contadorHuespedes; i++) {
+            incrementarIteraciones();
             if (huespedes[i].getDocumento() == documento) {
                 return true;
             }
@@ -58,6 +87,7 @@ bool SistemaUdestay::documentoExiste(string& documento, bool esAnfitrion) {
 
 bool SistemaUdestay::alojamientoDisponible(int idAlojamiento, Fecha* inicio, int noches) {
     for (int i = 0; i < contadorAlojamientos; i++) {
+        incrementarIteraciones();
         if (alojamientos[i].getIdentificador() == idAlojamiento) {
             return alojamientos[i].estaDisponible(inicio, noches);
         }
@@ -99,7 +129,6 @@ void SistemaUdestay::agregarAlojamiento(Alojamiento* alojamiento) {
     }
 }
 
-// validar documento
 bool SistemaUdestay::validarDocumento(const char* documento, int tipoUsuario, const char* rutaArchivo) {
     string docStr = documento;
 
@@ -112,6 +141,7 @@ bool SistemaUdestay::validarDocumento(const char* documento, int tipoUsuario, co
 
         string linea;
         while (getline(archivo, linea)) {
+            incrementarIteraciones();
             size_t pos = linea.find(',');
             if (pos == string::npos) continue;
 
@@ -133,6 +163,7 @@ bool SistemaUdestay::validarDocumento(const char* documento, int tipoUsuario, co
 
         string linea;
         while (getline(archivo, linea)) {
+            incrementarIteraciones();
             size_t pos = linea.find(',');
             if (pos == string::npos) continue;
 
@@ -149,20 +180,15 @@ bool SistemaUdestay::validarDocumento(const char* documento, int tipoUsuario, co
     return false;
 }
 
-
-
-// buscar alojamiento por ubicacion
-void SistemaUdestay::buscarAlojamientoPorUbicacion(string& ubicacion) {
+void SistemaUdestay::buscarAlojamientoPorCodigo(int codigo) {
     bool encontrado = false;
 
-    cout << "Alojamientos en " << ubicacion << ":" << endl;
+    cout << "Buscando alojamiento con código " << codigo << ":" << endl;
     cout << "----------------------------------------" << endl;
 
     for (int i = 0; i < contadorAlojamientos; i++) {
-        // Verificar si coincide con municipio o departamento
-        if (alojamientos[i].getMunicipio() == ubicacion ||
-            alojamientos[i].getDepartamento() == ubicacion) {
-
+        incrementarIteraciones();
+        if (alojamientos[i].getIdentificador() == codigo) {
             cout << "ID: " << alojamientos[i].getIdentificador() << endl;
             cout << "Nombre: " << alojamientos[i].getNombre() << endl;
             cout << "Precio por noche: $" << alojamientos[i].getPrecioNoche() << endl;
@@ -170,15 +196,15 @@ void SistemaUdestay::buscarAlojamientoPorUbicacion(string& ubicacion) {
             cout << "Amenidades: " << alojamientos[i].getAmenidades() << endl;
             cout << "----------------------------------------" << endl;
             encontrado = true;
+            break;
         }
     }
 
     if (!encontrado) {
-        cout << "No se encontraron alojamientos en la ubicacion especificada." << endl;
+        cout << "No se encontró ningún alojamiento con el código especificado." << endl;
     }
 }
 
-// mostrar estadisticas de la reserva
 void SistemaUdestay::mostrarEstadisticaReservas() {
     if (contadorReservaciones == 0) {
         cout << "No hay reservaciones registradas en el sistema." << endl;
@@ -193,40 +219,43 @@ void SistemaUdestay::mostrarEstadisticaReservas() {
     cout << "----------------------------------------" << endl;
 
     for (int i = 0; i < contadorReservaciones; i++) {
+        incrementarIteraciones();
         Alojamiento* alojamiento = reservaciones[i].getAlojamiento();
         string tipo = alojamiento->getTipo();
 
-        // Incrementar contador por tipo
         if (tipo == "casa"){
             reservasPorTipo[0]++;
         }else {
             reservasPorTipo[1]++;
         }
 
-
-        // Calcular ingresos
         ingresosTotales += reservaciones[i].calcularCosto();
 
-        // Estadísticas por mes (simplificado)
         Fecha* fechaInicio = reservaciones[i].getInicio();
         string mes = fechaInicio->getMes();
-        // Convertir mes a índice (simplificado)
         int mesIndice = 0;
         if (mes == "enero") mesIndice = 0;
         else if (mes == "febrero") mesIndice = 1;
-        // ... y así sucesivamente para todos los meses
+        else if (mes == "marzo") mesIndice = 2;
+        else if (mes == "abril") mesIndice = 3;
+        else if (mes == "mayo") mesIndice = 4;
+        else if (mes == "junio") mesIndice = 5;
+        else if (mes == "julio") mesIndice = 6;
+        else if (mes == "agosto") mesIndice = 7;
+        else if (mes == "septiembre") mesIndice = 8;
+        else if (mes == "octubre") mesIndice = 9;
+        else if (mes == "noviembre") mesIndice = 10;
+        else if (mes == "diciembre") mesIndice = 11;
 
         reservasPorMes[mesIndice]++;
     }
 
-    // Mostrar estadísticas
     cout << "Total de reservaciones: " << contadorReservaciones << endl;
     cout << "Ingresos totales: $" << ingresosTotales << endl;
 
     cout << "\nReservaciones por tipo de alojamiento:" << endl;
     cout << "Casa: " << reservasPorTipo[0] << endl;
     cout << "Apartamento: " << reservasPorTipo[1] << endl;
-
 
     cout << "\nReservaciones por mes:" << endl;
     string meses[12] = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -241,13 +270,8 @@ void SistemaUdestay::mostrarEstadisticaReservas() {
     cout << "----------------------------------------" << endl;
 }
 
-// Implementación de métodos de autenticación
-#include <fstream>
-#include <string>
-using namespace std;
-
 bool SistemaUdestay::verificarAnfitrion(string& documento) {
-    ifstream archivo("anfitriones.txt"); // Archivo específico para anfitriones
+    ifstream archivo("anfitriones.txt");
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir anfitriones.txt." << endl;
         return false;
@@ -255,21 +279,21 @@ bool SistemaUdestay::verificarAnfitrion(string& documento) {
 
     string linea;
     while (getline(archivo, linea)) {
-        size_t pos = linea.find(','); // Busca la primera coma
-        if (pos == string::npos) continue; // Si no hay coma, ignora la línea
+        incrementarIteraciones();
+        size_t pos = linea.find(',');
+        if (pos == string::npos) continue;
 
-        string cedula = linea.substr(0, pos); // Extrae la cédula (primer campo)
+        string cedula = linea.substr(0, pos);
         if (cedula == documento) {
             archivo.close();
-            return true; // ¡Cédula encontrada!
+            return true;
         }
     }
 
     archivo.close();
-    return false; // Cédula no registrada
+    return false;
 }
 
-// validar contraseña anfitrión
 bool SistemaUdestay::validarContraseñaAnfitrion(string& documento, string& claveIngresada) {
     ifstream archivo("anfitriones.txt");
     if (!archivo.is_open()) {
@@ -279,27 +303,30 @@ bool SistemaUdestay::validarContraseñaAnfitrion(string& documento, string& clav
 
     string linea;
     while (getline(archivo, linea)) {
-        size_t posUltimaComa = linea.find_last_of(','); // Última coma (la clave está después)
+        incrementarIteraciones();
+        size_t posUltimaComa = linea.find_last_of(',');
         if (posUltimaComa == string::npos) continue;
 
-        string cedula = linea.substr(0, linea.find(',')); // Extrae cédula
-        string clave = linea.substr(posUltimaComa + 1);   // Extrae clave (después de la última coma)
+        string cedula = linea.substr(0, linea.find(','));
+        string clave = linea.substr(posUltimaComa + 1);
 
         if (cedula == documento && clave == claveIngresada) {
             archivo.close();
-            return true; // Cédula y clave coinciden
+            return true;
         }
     }
 
     archivo.close();
-    return false; // Clave incorrecta o cédula no existe
+    return false;
 }
+
 bool SistemaUdestay::verificarHuesped(string& documento) {
     return documentoExiste(documento, false);
 }
 
 bool SistemaUdestay::validarContraseñaHuesped(string& documento, string& contraseña) {
     for (int i = 0; i < contadorHuespedes; i++) {
+        incrementarIteraciones();
         if (huespedes[i].getDocumento() == documento) {
             return huespedes[i].verificarCredenciales(contraseña);
         }
@@ -307,27 +334,25 @@ bool SistemaUdestay::validarContraseñaHuesped(string& documento, string& contra
     return false;
 }
 
-// actualizar el historico
 void SistemaUdestay::actualizarHistorico(Fecha* fechaCorte) {
     bool encontrado = false;
 
     cout << "Actualizando historico con fecha de corte..." << endl;
 
     for (int i = 0; i < contadorReservaciones; i++) {
+        incrementarIteraciones();
         Fecha* fechaInicio = reservaciones[i].getInicio();
 
-        // Verificar si la reservación ya pasó
         if (fechaInicio->interceptaCon(fechaCorte, 0)) {
-            // La reservación ya pasó, moverla al histórico
             historico->agregarReserva(&reservaciones[i]);
 
-            // Eliminar de reservaciones activas (
             for (int j = i; j < contadorReservaciones - 1; j++) {
+                incrementarIteraciones();
                 reservaciones[j] = reservaciones[j + 1];
             }
 
             contadorReservaciones--;
-            i--; // Ajustar índice después de eliminar
+            i--;
             encontrado = true;
         }
     }
@@ -339,12 +364,11 @@ void SistemaUdestay::actualizarHistorico(Fecha* fechaCorte) {
     }
 }
 
-// guardar datos
 void SistemaUdestay::guardarDatos() {
-    // 1. Guardar anfitriones
     ofstream archivoAnfitriones("anfitriones.txt");
     if (archivoAnfitriones.is_open()) {
         for (int i = 0; i < contadorAnfitriones; i++) {
+            incrementarIteraciones();
             archivoAnfitriones << anfitriones[i].getDocumento() << ","
                                << anfitriones[i].getAntiguedad() << ","
                                << anfitriones[i].getPuntuacion() << ","
@@ -355,10 +379,10 @@ void SistemaUdestay::guardarDatos() {
         cout << "Error al guardar datos de anfitriones" << endl;
     }
 
-    // 2. Guardar huéspedes
     ofstream archivoHuespedes("huespedes.txt");
     if (archivoHuespedes.is_open()) {
         for (int i = 0; i < contadorHuespedes; i++) {
+            incrementarIteraciones();
             archivoHuespedes << huespedes[i].getDocumento() << ","
                              << huespedes[i].getAntiguedad() << ","
                              << huespedes[i].getPuntuacion() << ","
@@ -369,26 +393,25 @@ void SistemaUdestay::guardarDatos() {
         cout << "Error al guardar datos de huéspedes" << endl;
     }
 
-    // 3. Guardar alojamientos
     ofstream archivoAlojamientos("alojamientos.txt");
     if (archivoAlojamientos.is_open()) {
         for (int i = 0; i < contadorAlojamientos; i++) {
+            incrementarIteraciones();
             archivoAlojamientos << alojamientos[i].getIdentificador() << ","
                                 << alojamientos[i].getNombre() << ","
                                 << alojamientos[i].getPrecioNoche() << ","
                                 << alojamientos[i].getTipo() << ","
                                 << alojamientos[i].getMunicipio() << "\n";
-                                //<< alojamientos[i].get() << "\n";
         }
         archivoAlojamientos.close();
     } else {
         cout << "Error al guardar datos de alojamientos" << endl;
     }
 
-    // 4. Guardar reservaciones activas
     ofstream archivoReservaciones("reservaciones.txt");
     if (archivoReservaciones.is_open()) {
         for (int i = 0; i < contadorReservaciones; i++) {
+            incrementarIteraciones();
             archivoReservaciones << reservaciones[i].getCodigo() << ","
                                  << reservaciones[i].getCodigo() << ","
                                  << reservaciones[i].getHuesped() << ","
@@ -402,10 +425,8 @@ void SistemaUdestay::guardarDatos() {
         cout << "Error al guardar datos de reservaciones" << endl;
     }
 
-    // 5. Guardar histórico
     ofstream archivoHistorico("historico.txt");
     if (archivoHistorico.is_open()) {
-
         archivoHistorico.close();
     } else {
         cout << "Error al guardar datos históricos" << endl;
@@ -414,25 +435,18 @@ void SistemaUdestay::guardarDatos() {
     cout << "Datos guardados exitosamente en archivos." << endl;
 }
 
-// cargar datos
 void SistemaUdestay::cargarDatos() {
-    using namespace std;
-
-    //cout << "Cargando datos del sistema..." << endl;
-
-    // Reiniciar contadores
     contadorAnfitriones = 0;
     contadorHuespedes = 0;
     contadorAlojamientos = 0;
     contadorReservaciones = 0;
 
-    // -------- Cargar anfitriones --------
     ifstream archivoAnfitriones("anfitriones.txt");
     if (archivoAnfitriones.is_open()) {
         string linea;
         while (getline(archivoAnfitriones, linea)) {
+            incrementarIteraciones();
             if (linea.empty() || contadorAnfitriones >= capacidad) break;
-
 
             string documento = "";
             string antiguedadStr = "";
@@ -442,7 +456,8 @@ void SistemaUdestay::cargarDatos() {
             int campo = 0;
             string campoActual = "";
 
-            for (int i = 0; i < linea.length(); i++) {
+            for (int i = 0; i < (int)linea.length(); i++) {
+                incrementarIteraciones();
                 if (linea[i] == ',') {
                     if (campo == 0) documento = campoActual;
                     else if (campo == 1) antiguedadStr = campoActual;
@@ -454,13 +469,12 @@ void SistemaUdestay::cargarDatos() {
                     campoActual += linea[i];
                 }
             }
-            contrasena = campoActual; // Último campo
+            contrasena = campoActual;
 
             if (!documento.empty()) {
                 anfitriones[contadorAnfitriones].setDocumento(documento);
                 anfitriones[contadorAnfitriones].setAntiguedad(antiguedadStr);
 
-                // Convertir string a float manualmente
                 float puntuacion = 0.0;
                 if (!puntuacionStr.empty()) {
                     puntuacion = stof(puntuacionStr);
@@ -472,19 +486,17 @@ void SistemaUdestay::cargarDatos() {
             }
         }
         archivoAnfitriones.close();
-        //cout << "Cargados " << contadorAnfitriones << " anfitriones." << endl;
     } else {
         cout << "No se pudo abrir 'anfitriones.txt'" << endl;
     }
 
-    // -------- Cargar huéspedes --------
     ifstream archivoHuespedes("huespedes.txt");
     if (archivoHuespedes.is_open()) {
         string linea;
         while (getline(archivoHuespedes, linea)) {
+            incrementarIteraciones();
             if (linea.empty() || contadorHuespedes >= capacidad) break;
 
-            // Parsear manualmente
             string documento = "";
             string antiguedadStr = "";
             string puntuacionStr = "";
@@ -493,7 +505,8 @@ void SistemaUdestay::cargarDatos() {
             int campo = 0;
             string campoActual = "";
 
-            for (int i = 0; i < linea.length(); i++) {
+            for (int i = 0; i < (int)linea.length(); i++) {
+                incrementarIteraciones();
                 if (linea[i] == ',') {
                     if (campo == 0) documento = campoActual;
                     else if (campo == 1) antiguedadStr = campoActual;
@@ -505,13 +518,12 @@ void SistemaUdestay::cargarDatos() {
                     campoActual += linea[i];
                 }
             }
-            contrasena = campoActual; // Último campo
+            contrasena = campoActual;
 
             if (!documento.empty()) {
                 huespedes[contadorHuespedes].setDocumento(documento);
                 huespedes[contadorHuespedes].setAntiguedad(antiguedadStr);
 
-                // Convertir string a float manualmente
                 float puntuacion = 0.0;
                 if (!puntuacionStr.empty()) {
                     puntuacion = stof(puntuacionStr);
@@ -523,19 +535,17 @@ void SistemaUdestay::cargarDatos() {
             }
         }
         archivoHuespedes.close();
-        //cout << "Cargados " << contadorHuespedes << " huéspedes." << endl;
     } else {
         cout << "No se pudo abrir 'huespedes.txt'" << endl;
     }
 
-    // -------- Cargar alojamientos --------
     ifstream archivoAlojamientos("alojamientos.txt");
     if (archivoAlojamientos.is_open()) {
         string linea;
         while (getline(archivoAlojamientos, linea)) {
+            incrementarIteraciones();
             if (linea.empty() || contadorAlojamientos >= capacidad) break;
 
-            // Parsear manualmente
             string id = "";
             string nombre = "";
             string precioStr = "";
@@ -545,7 +555,8 @@ void SistemaUdestay::cargarDatos() {
             int campo = 0;
             string campoActual = "";
 
-            for (int i = 0; i < linea.length(); i++) {
+            for (int i = 0; i < (int)linea.length(); i++) {
+                incrementarIteraciones();
                 if (linea[i] == ',') {
                     if (campo == 0) id = campoActual;
                     else if (campo == 1) nombre = campoActual;
@@ -558,7 +569,7 @@ void SistemaUdestay::cargarDatos() {
                     campoActual += linea[i];
                 }
             }
-            municipio = campoActual; // Último campo
+            municipio = campoActual;
 
             if (!id.empty()) {
                 int identificador = stoi(id);
@@ -577,26 +588,68 @@ void SistemaUdestay::cargarDatos() {
             }
         }
         archivoAlojamientos.close();
-        //cout << "Cargados " << contadorAlojamientos << " alojamientos." << endl;
     } else {
         cout << "No se pudo abrir 'alojamientos.txt'" << endl;
     }
 
-    // -------- Cargar  historico --------
-    ifstream archivoHistorico("historico.txt");
+    ifstream archivoReservaciones("historico.txt");
     if (archivoReservaciones.is_open()) {
         string linea;
-        while (getline(archivoHistorico, linea)) {
-            if (linea.empty() || contadorHistorico >= capacidad) break;
-
-
-            contadorHistorico++;
+        while (getline(archivoReservaciones, linea)) {
+            incrementarIteraciones();
+            if (linea.empty() || contadorReservaciones >= capacidad) break;
+            contadorReservaciones++;
         }
-        archivoHistorico.close();
-        //cout << "Cargadas " << contadorReservaciones << " reservaciones." << endl;
+        archivoReservaciones.close();
     } else {
-        cout << "No se pudo abrir 'historico.txt" << endl;
+        cout << "No se pudo abrir 'historico.txt'" << endl;
     }
-
 }
 
+// Métodos públicos para medición de recursos
+void SistemaUdestay::mostrarConsumoRecursos(const string& nombreFuncionalidad) {
+    cout << "---------- CONSUMO DE RECURSOS --------------" << nombreFuncionalidad << " " << endl;
+    cout << "Iteraciones locales: " << contadorIteracionesLocal << endl;
+    cout << "Iteraciones globales: " << contadorIteracionesGlobal << endl;
+    cout << "Memoria total estimada: " << obtenerMemoriaTotal() << " bytes" << endl;
+    cout << "-----------------------------------------------------------------" << endl;
+}
+
+void SistemaUdestay::iniciarMedicion() {
+    resetearContadorLocal();
+    cout << "Iniciando medición de recursos..." << endl;
+}
+
+void SistemaUdestay::finalizarMedicion(const string& nombreFuncionalidad) {
+    cout << "Finalizando medición de recursos..." << endl;
+    mostrarConsumoRecursos(nombreFuncionalidad);
+}
+
+long long SistemaUdestay::obtenerIteracionesTotales() {
+    return contadorIteracionesGlobal;
+}
+
+long long SistemaUdestay::obtenerMemoriaTotal() {
+    long long memoriaTotal = 0;
+
+    memoriaTotal += calcularMemoriaArray(capacidad, sizeof(Anfitrion));
+    memoriaTotal += calcularMemoriaArray(capacidad, sizeof(Huesped));
+    memoriaTotal += calcularMemoriaArray(capacidad, sizeof(Alojamiento));
+    memoriaTotal += calcularMemoriaArray(capacidad, sizeof(Reservacion));
+    memoriaTotal += calcularMemoriaObjetos();
+
+    return memoriaTotal;
+}
+
+void SistemaUdestay::mostrarEstadisticasCompletas() {
+    cout << "----------- ESTADÍSTICAS COMPLETAS DEL SISTEMA ---------" << endl;
+    cout << "Capacidad máxima: " << capacidad << endl;
+    cout << "Anfitriones registrados: " << contadorAnfitriones << endl;
+    cout << "Huéspedes registrados: " << contadorHuespedes << endl;
+    cout << "Alojamientos registrados: " << contadorAlojamientos << endl;
+    cout << "Reservaciones activas: " << contadorReservaciones << endl;
+    cout << "----------------------------------------" << endl;
+    cout << "Memoria total utilizada: " << obtenerMemoriaTotal() << " bytes" << endl;
+    cout << "Iteraciones totales realizadas: " << contadorIteracionesGlobal << endl;
+    cout << "------------------------------------------------------------------" << endl;
+}
